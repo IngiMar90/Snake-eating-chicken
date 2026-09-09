@@ -36,7 +36,7 @@ const sounds = {};
 
 const DIR = {
   up: { x: 0, y: -1, angle: Math.PI }, down: { x: 0, y: 1, angle: 0 },
-  left: { x: -1, y: 0, angle: -Math.PI / 2 }, right: { x: 1, y: 0, angle: Math.PI / 2 }
+  left: { x: -1, y: 0, angle: Math.PI / 2 }, right: { x: 1, y: 0, angle: -Math.PI / 2 }
 };
 const OPPOSITE = { up: "down", down: "up", left: "right", right: "left" };
 const LEVEL_NAMES = ["Græni völlurinn", "Hænsnagarðurinn", "Fyrstu steinarnir", "Hænan á flótta", "Gullið glitrar", "Gamla girðingin", "Hraði haninn", "Power-up veisla", "Síðasta æfingin", "Risahaninn"];
