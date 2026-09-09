@@ -33,6 +33,11 @@ const soundFiles = {
 };
 const images = {};
 const sounds = {};
+const outlinedSprites = new WeakMap();
+const OUTLINED_IMAGE_NAMES = new Set([
+  "chick", "hen", "rooster", "golden", "boss", "rock", "fence",
+  "shield", "magnet", "slow", "double", "ghost", "shorten"
+]);
 
 const DIR = {
   up: { x: 0, y: -1, angle: Math.PI }, down: { x: 0, y: 1, angle: 0 },
@@ -41,9 +46,9 @@ const DIR = {
 const OPPOSITE = { up: "down", down: "up", left: "right", right: "left" };
 const LEVEL_NAMES = ["Græni völlurinn", "Hænsnagarðurinn", "Fyrstu steinarnir", "Hænan á flótta", "Gullið glitrar", "Gamla girðingin", "Hraði haninn", "Power-up veisla", "Síðasta æfingin", "Risahaninn"];
 const DIFFICULTY = {
-  calm: { speed: 285, lives: 5, wrap: true, label: "Rólegt" },
-  normal: { speed: 195, lives: 3, wrap: false, label: "Venjulegt" },
-  hard: { speed: 135, lives: 2, wrap: false, label: "Krefjandi" }
+  calm: { speed: 225, accel: .28, levelAccel: 1.2, lives: 5, wrap: true, label: "Rólegt" },
+  normal: { speed: 160, accel: .22, levelAccel: 1, lives: 3, wrap: false, label: "Venjulegt" },
+  hard: { speed: 112, accel: .15, levelAccel: .8, lives: 2, wrap: false, label: "Krefjandi" }
 };
 const POWER_INFO = {
   shield: { label: "Skjöldur", duration: 0 }, magnet: { label: "Segull", duration: 8500 },
@@ -76,6 +81,8 @@ let levelProgress = 0;
 let lives = 3;
 let runPoints = 0;
 let snake = [];
+let previousSnake = [];
+let birdsEaten = 0;
 let direction = "right";
 let queuedDirection = "right";
 let food = null;
@@ -118,7 +125,28 @@ function preload() {
     audio.preload = "auto";
     sounds[name] = audio;
   }
-  return Promise.all(imageJobs);
+  return Promise.all(imageJobs).then(() => {
+    for (const [name, img] of Object.entries(images)) {
+      if (OUTLINED_IMAGE_NAMES.has(name)) outlinedSprites.set(img, makeOutlinedSprite(img));
+    }
+  });
+}
+
+function makeOutlinedSprite(img) {
+  const edge = Math.max(6, Math.round(Math.min(img.width, img.height) * .05));
+  const pad = edge * 2;
+  const sprite = document.createElement("canvas");
+  sprite.width = img.width + pad * 2;
+  sprite.height = img.height + pad * 2;
+  const spriteCtx = sprite.getContext("2d");
+  spriteCtx.filter = [
+    `drop-shadow(${edge}px 0 0 #020805)`, `drop-shadow(${-edge}px 0 0 #020805)`,
+    `drop-shadow(0 ${edge}px 0 #020805)`, `drop-shadow(0 ${-edge}px 0 #020805)`,
+    `drop-shadow(${edge}px ${edge}px 0 #020805)`, `drop-shadow(${-edge}px ${edge}px 0 #020805)`,
+    `drop-shadow(${edge}px ${-edge}px 0 #020805)`, `drop-shadow(${-edge}px ${-edge}px 0 #020805)`
+  ].join(" ");
+  spriteCtx.drawImage(img, pad, pad);
+  return sprite;
 }
 
 function playSound(name, volume = .62) {
@@ -201,6 +229,7 @@ function startRun() {
   mode = "playing";
   level = 1;
   runPoints = 0;
+  birdsEaten = 0;
   lives = DIFFICULTY[save.difficulty].lives + save.iron;
   startLevel(1);
   setScreen("game");
@@ -238,6 +267,7 @@ function resetSnakeOnly() {
     cy = (cy + 1) % Math.max(1, view.rows - 1);
   }
   snake = [{ x: cx, y: cy }, { x: cx - 1, y: cy }, { x: cx - 2, y: cy }];
+  previousSnake = snake.map(cell => ({ ...cell }));
   direction = "right";
   queuedDirection = "right";
   moveAccumulator = 0;
@@ -328,12 +358,14 @@ function turn(newDirection) {
 }
 
 function movementInterval() {
-  let interval = DIFFICULTY[save.difficulty].speed - (level - 1) * (save.difficulty === "hard" ? 4 : 3);
+  const settings = DIFFICULTY[save.difficulty];
+  let interval = settings.speed - (level - 1) * settings.levelAccel - birdsEaten * settings.accel;
   if (activePowers.slow > 0) interval *= 1.58;
   return Math.max(78, interval);
 }
 
 function stepSnake() {
+  const beforeMove = snake.map(cell => ({ ...cell }));
   direction = queuedDirection;
   const d = DIR[direction];
   let next = { x: snake[0].x + d.x, y: snake[0].y + d.y };
@@ -365,6 +397,7 @@ function stepSnake() {
   }
   if (!grew) snake.pop();
   if (activePowers.magnet > 0 && food) pullFoodCloser();
+  previousSnake = beforeMove;
 }
 
 function collide(type) {
@@ -409,6 +442,7 @@ function findSafeDirection() {
 }
 
 function eatBird(type, isGolden, pos) {
+  birdsEaten++;
   const base = type === "golden" ? 10 : type === "rooster" ? 5 : type === "hen" ? 3 : 1;
   combo = comboLeft > 0 ? Math.min(5, combo + 1) : 1;
   comboLeft = 4500;
@@ -435,6 +469,7 @@ function eatBird(type, isGolden, pos) {
 }
 
 function catchBoss(pos) {
+  birdsEaten++;
   bossHits++;
   levelProgress = bossHits;
   combo = comboLeft > 0 ? Math.min(5, combo + 1) : 1;
@@ -568,18 +603,29 @@ function update(dt) {
   updateHud();
 }
 
+const hudCache = {};
 function updateHud() {
-  ui.hudLevel.textContent = `${level}/10`;
-  ui.hudFood.textContent = `${levelProgress}/${levelTarget}`;
-  ui.hudPoints.textContent = save.points;
-  ui.hudLives.innerHTML = Array.from({ length: Math.max(0, lives) }, () => `<img src="${SPRITE}hud_heart.webp" alt="">`).join("");
-  ui.combo.textContent = `COMBO ×${combo}`;
-  ui.combo.classList.toggle("hidden", combo < 2 || comboLeft <= 0);
+  const levelText = `${level}/10`;
+  const foodText = `${levelProgress}/${levelTarget}`;
+  if (hudCache.level !== levelText) { ui.hudLevel.textContent = levelText; hudCache.level = levelText; }
+  if (hudCache.food !== foodText) { ui.hudFood.textContent = foodText; hudCache.food = foodText; }
+  if (hudCache.points !== save.points) { ui.hudPoints.textContent = save.points; hudCache.points = save.points; }
+  if (hudCache.lives !== lives) {
+    ui.hudLives.innerHTML = Array.from({ length: Math.max(0, lives) }, () => `<img src="${SPRITE}hud_heart.webp" alt="">`).join("");
+    hudCache.lives = lives;
+  }
+  const comboVisible = combo >= 2 && comboLeft > 0;
+  if (hudCache.combo !== combo) { ui.combo.textContent = `COMBO ×${combo}`; hudCache.combo = combo; }
+  if (hudCache.comboVisible !== comboVisible) { ui.combo.classList.toggle("hidden", !comboVisible); hudCache.comboVisible = comboVisible; }
   const labels = [];
   if (shieldCharges) labels.push(`🛡️ ${shieldCharges}`);
   for (const [type, left] of Object.entries(activePowers)) labels.push(`${POWER_INFO[type].label} ${Math.ceil(left / 1000)}s`);
-  ui.power.textContent = labels.join(" · ");
-  ui.power.classList.toggle("hidden", !labels.length);
+  const powerText = labels.join(" · ");
+  if (hudCache.power !== powerText) {
+    ui.power.textContent = powerText;
+    ui.power.classList.toggle("hidden", !powerText);
+    hudCache.power = powerText;
+  }
 }
 
 function drawCover(img, x, y, w, h) {
@@ -591,26 +637,19 @@ function drawCover(img, x, y, w, h) {
 
 function drawSprite(img, pos, size = view.tile * 1.04, angle = 0, alpha = 1, outlined = false) {
   if (!img || !pos) return;
+  if (outlined) img = outlinedSprites.get(img) || img;
   const cx = view.x + (pos.x + .5) * view.tile;
   const cy = view.y + (pos.y + .5) * view.tile;
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.translate(cx, cy);
   ctx.rotate(angle);
-  if (outlined) {
-    const edge = Math.max(2, view.tile * .045);
-    ctx.filter = [
-      `drop-shadow(${edge}px 0 0 #020805)`, `drop-shadow(${-edge}px 0 0 #020805)`,
-      `drop-shadow(0 ${edge}px 0 #020805)`, `drop-shadow(0 ${-edge}px 0 #020805)`,
-      `drop-shadow(${edge}px ${edge}px 0 #020805)`, `drop-shadow(${-edge}px ${edge}px 0 #020805)`,
-      `drop-shadow(${edge}px ${-edge}px 0 #020805)`, `drop-shadow(${-edge}px ${-edge}px 0 #020805)`
-    ].join(" ");
-  }
   ctx.drawImage(img, -size / 2, -size / 2, size, size);
   ctx.restore();
 }
 
 function draw() {
+  const now = performance.now();
   ctx.clearRect(0, 0, view.width, view.height);
   if (!["playing", "paused", "transition", "won", "gameover"].includes(mode)) {
     ctx.fillStyle = "#07150b";
@@ -633,29 +672,29 @@ function draw() {
       const center = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
       const cx = view.x + (center.x + .5) * view.tile, cy = view.y + (center.y + .5) * view.tile;
       ctx.save(); ctx.translate(cx, cy); if (obstacle.vertical) ctx.rotate(Math.PI / 2);
-      ctx.filter = "drop-shadow(0 0 3px #020805) drop-shadow(0 0 2px #020805)";
-      ctx.drawImage(images.fence, -view.tile * 1.1, -view.tile * .56, view.tile * 2.2, view.tile * 1.12); ctx.restore();
+      const fenceImg = outlinedSprites.get(images.fence) || images.fence;
+      ctx.drawImage(fenceImg, -view.tile * 1.1, -view.tile * .56, view.tile * 2.2, view.tile * 1.12); ctx.restore();
     }
   }
 
   if (food) {
     const img = images[food.type];
-    const bob = 1 + Math.sin(performance.now() / 220) * .035;
+    const bob = 1 + Math.sin(now / 220) * .035;
     drawSprite(img, food.pos, view.tile * 1.22 * bob, 0, 1, true);
   }
   if (goldenFood) {
-    const pulse = 1 + Math.sin(performance.now() / 110) * .08;
+    const pulse = 1 + Math.sin(now / 110) * .08;
     glowAt(goldenFood.pos, "#ffe43b", view.tile * .72);
     drawSprite(images.golden, goldenFood.pos, view.tile * 1.30 * pulse, 0, Math.min(1, goldenFood.left / 600), true);
   }
   if (powerup) {
-    const pulse = 1 + Math.sin(performance.now() / 130) * .07;
+    const pulse = 1 + Math.sin(now / 130) * .07;
     glowAt(powerup.pos, "#65f1ff", view.tile * .65);
     drawSprite(images[powerup.type], powerup.pos, view.tile * 1.12 * pulse, 0, Math.min(1, powerup.left / 600), true);
   }
   if (boss) {
     glowAt(boss.pos, "#ff8a32", view.tile * 1.05);
-    drawSprite(images.boss, boss.pos, view.tile * 1.92 * (1 + Math.sin(performance.now() / 180) * .035), 0, 1, true);
+    drawSprite(images.boss, boss.pos, view.tile * 1.92 * (1 + Math.sin(now / 180) * .035), 0, 1, true);
   }
 
   drawSnake();
@@ -671,6 +710,7 @@ function drawSnake() {
   const ghostAlpha = activePowers.ghost > 0 ? .62 : 1;
   const bodyImg = images[`${skin}Body`];
   const tailImg = images[`${skin}Tail`];
+  const progress = Math.min(1, moveAccumulator / movementInterval());
   const foodAhead = (() => {
     const d = DIR[direction];
     const look = { x: snake[0].x + d.x, y: snake[0].y + d.y };
@@ -679,16 +719,27 @@ function drawSnake() {
   for (let i = snake.length - 1; i >= 1; i--) {
     if (i === snake.length - 1) {
       const toward = directionBetween(snake[i], snake[i - 1]);
-      drawSprite(tailImg, snake[i], view.tile * 1.1, DIR[toward].angle, ghostAlpha);
+      drawSprite(tailImg, visualSnakePosition(i, progress), view.tile * 1.1, DIR[toward].angle, ghostAlpha);
     } else {
       const a = snake[i - 1], b = snake[i + 1];
       const horizontal = wrappedDelta(a.x, b.x, view.cols) !== 0;
-      drawSprite(bodyImg, snake[i], view.tile * 1.1, horizontal ? Math.PI / 2 : 0, ghostAlpha);
+      drawSprite(bodyImg, visualSnakePosition(i, progress), view.tile * 1.1, horizontal ? Math.PI / 2 : 0, ghostAlpha);
     }
   }
-  if (shieldCharges) glowAt(snake[0], "#9dff64", view.tile * .85);
+  const visualHead = visualSnakePosition(0, progress);
+  if (shieldCharges) glowAt(visualHead, "#9dff64", view.tile * .85);
   const headImg = images[`${skin}${foodAhead ? "Eat" : "Head"}`];
-  drawSprite(headImg, snake[0], view.tile * 1.18, DIR[direction].angle, ghostAlpha);
+  drawSprite(headImg, visualHead, view.tile * 1.18, DIR[direction].angle, ghostAlpha);
+}
+
+function visualSnakePosition(index, progress) {
+  const current = snake[index];
+  const previous = previousSnake[Math.min(index, previousSnake.length - 1)] || current;
+  if (Math.abs(current.x - previous.x) > 1 || Math.abs(current.y - previous.y) > 1) return current;
+  return {
+    x: previous.x + (current.x - previous.x) * progress,
+    y: previous.y + (current.y - previous.y) * progress
+  };
 }
 
 function wrappedDelta(a, b, size) {

@@ -1,4 +1,4 @@
-const CACHE = "snake-chicken-v5";
+const CACHE = "snake-chicken-v6";
 const CORE = [
   "./", "./index.html", "./styles.css", "./game.js", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable-512.png", "./icons/apple-touch-icon.png",
