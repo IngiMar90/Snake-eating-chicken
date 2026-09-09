@@ -21,7 +21,7 @@ const imageFiles = {
   rock: "obstacle_rock.webp", fence: "obstacle_fence.webp", heart: "hud_heart.webp",
   greenHead: "snake_head.webp", greenEat: "snake_head_eating.webp", greenBody: "snake_body.webp", greenTail: "snake_tail.webp",
   yellowHead: "snake_head_yellow.webp", yellowEat: "snake_head_yellow_eating.webp", yellowBody: "snake_body_yellow.webp", yellowTail: "snake_tail_yellow.webp",
-  blueHead: "snake_head_blue.webp", blueEat: "snake_head_blue_eating.webp", blueBody: "snake_body_blue.webp", blueTail: "snake_tail_blue.webp",
+  blueHead: "snake_head_blue.webp", blueEat: "snake_head_blue_eating.webp", blueBody: "snake_body_blue.webp", blueTail: "snake_tail_blue_v2.webp",
   shield: "powerup_shield.webp", magnet: "powerup_magnet.webp", slow: "powerup_slow.webp",
   double: "powerup_double_points.webp", ghost: "powerup_ghost.webp", shorten: "powerup_shorten.webp"
 };
@@ -110,7 +110,7 @@ function preload() {
   const imageJobs = Object.entries(imageFiles).map(([name, file]) => new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => { images[name] = img; resolve(); };
-    img.onerror = reject;
+    img.onerror = () => reject(new Error(`Tókst ekki að hlaða mynd: ${file}`));
     img.src = SPRITE + file;
   }));
   for (const [name, file] of Object.entries(soundFiles)) {
@@ -855,7 +855,7 @@ async function init() {
   setMuted(save.muted);
   refreshPoints();
   setScreen("home");
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" }).catch(() => {});
   requestAnimationFrame(frame);
 }
 init();

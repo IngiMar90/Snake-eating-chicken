@@ -1,4 +1,4 @@
-const CACHE = "snake-chicken-v2";
+const CACHE = "snake-chicken-v3";
 const CORE = [
   "./", "./index.html", "./styles.css", "./game.js", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable-512.png", "./icons/apple-touch-icon.png",
@@ -7,7 +7,7 @@ const CORE = [
   "./assets/sprites/obstacle_rock.webp", "./assets/sprites/obstacle_fence.webp", "./assets/sprites/hud_heart.webp",
   "./assets/sprites/snake_head.webp", "./assets/sprites/snake_head_eating.webp", "./assets/sprites/snake_body.webp", "./assets/sprites/snake_tail.webp",
   "./assets/sprites/snake_head_yellow.webp", "./assets/sprites/snake_head_yellow_eating.webp", "./assets/sprites/snake_body_yellow.webp", "./assets/sprites/snake_tail_yellow.webp",
-  "./assets/sprites/snake_head_blue.webp", "./assets/sprites/snake_head_blue_eating.webp", "./assets/sprites/snake_body_blue.webp", "./assets/sprites/snake_tail_blue.webp",
+  "./assets/sprites/snake_head_blue.webp", "./assets/sprites/snake_head_blue_eating.webp", "./assets/sprites/snake_body_blue.webp", "./assets/sprites/snake_tail_blue_v2.webp",
   "./assets/sprites/powerup_shield.webp", "./assets/sprites/powerup_magnet.webp", "./assets/sprites/powerup_slow.webp", "./assets/sprites/powerup_double_points.webp", "./assets/sprites/powerup_ghost.webp", "./assets/sprites/powerup_shorten.webp",
   "./assets/audio/eat_chicken.ogg", "./assets/audio/chicken_cluck.ogg", "./assets/audio/golden_chicken.ogg", "./assets/audio/powerup.ogg", "./assets/audio/combo.ogg",
   "./assets/audio/shield_hit.ogg", "./assets/audio/collision_soft.ogg", "./assets/audio/rock_hit.ogg", "./assets/audio/fence_hit.ogg",

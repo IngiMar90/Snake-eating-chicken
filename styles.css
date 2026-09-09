@@ -30,9 +30,17 @@ button { font: inherit; touch-action: manipulation; }
   background: radial-gradient(circle at 50% 30%, rgba(65, 140, 64, .2), rgba(3, 12, 7, .82));
   overflow: auto;
 }
-.home-screen { background: #07150b; }
-.home-card { width: min(1180px, 96vw); display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(340px, .9fr); gap: 24px; align-items: center; }
-.logo-art { width: 100%; max-height: 86vh; object-fit: contain; border-radius: 30px; box-shadow: 0 26px 80px rgba(0,0,0,.5); }
+.home-screen {
+  background:
+    linear-gradient(90deg, rgba(2, 12, 5, .05) 0%, rgba(2, 12, 5, .08) 46%, rgba(2, 12, 5, .78) 100%),
+    url("assets/sprites/cover.webp") center / cover no-repeat;
+}
+.home-card {
+  width: 100%; height: 100%; display: flex; align-items: center; justify-content: flex-end;
+  padding: clamp(18px, 4vw, 72px); position: relative;
+}
+.logo-art { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.home-card .menu-panel { width: min(440px, 42vw); max-height: calc(100svh - 36px); overflow: auto; }
 .menu-panel, .panel {
   padding: 26px; border-radius: 28px; border: 2px solid rgba(255, 232, 111, .34);
   background: linear-gradient(145deg, rgba(27,75,37,.96), rgba(9,32,17,.96));
@@ -122,8 +130,13 @@ button:focus-visible { outline: 4px solid white; outline-offset: 3px; }
 
 @media (pointer: coarse), (max-width: 800px) { .touch-controls:not(.hidden) { display: grid; } }
 @media (max-width: 820px) {
-  .home-card { grid-template-columns: 1fr; width: min(570px, 96vw); }
-  .logo-art { max-height: 34vh; }
+  .home-screen {
+    background:
+      linear-gradient(180deg, rgba(2,12,5,.02) 0%, rgba(2,12,5,.12) 36%, rgba(2,12,5,.88) 100%),
+      url("assets/sprites/cover.webp") center / cover no-repeat;
+  }
+  .home-card { width: 100%; height: 100%; align-items: flex-end; justify-content: center; padding: 12px; }
+  .home-card .menu-panel { width: min(570px, 96vw); max-height: 61svh; }
   .menu-panel { padding: 17px; }
   .difficulty { grid-template-columns: repeat(3, 1fr); }
   .difficulty-btn { display: flex; flex-direction: column; text-align: center; padding: 8px 5px; }
@@ -136,8 +149,8 @@ button:focus-visible { outline: 4px solid white; outline-offset: 3px; }
   .lives img { width: 19px; height: 19px; }
 }
 @media (max-height: 680px) and (orientation: landscape) {
-  .home-card { grid-template-columns: 1.2fr 1fr; }
-  .logo-art { max-height: 86vh; }
+  .home-card { align-items: center; justify-content: flex-end; padding: 10px 3vw; }
+  .home-card .menu-panel { width: min(410px, 46vw); max-height: 96svh; }
   .menu-panel { padding: 14px; }
   .difficulty { margin: 10px 0; grid-template-columns: repeat(3,1fr); }
   .difficulty-btn { display: flex; flex-direction: column; text-align:center; padding:6px; }
