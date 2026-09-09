@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="is">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#173b20">
+  <meta name="description" content="Litríkur Snake-leikur þar sem snákurinn eltir kjúklinga, safnar power-ups og mætir risahana.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+  <title>Snake Eating Chicken!</title>
+</head>
+<body>
+  <main id="app" aria-label="Snake Eating Chicken leikur">
+    <canvas id="gameCanvas" aria-label="Leikvöllur"></canvas>
+
+    <section id="hud" class="hud hidden" aria-live="polite">
+      <div class="hud-group">
+        <span class="hud-chip"><strong>Borð</strong> <b id="hudLevel">1/10</b></span>
+        <span class="hud-chip"><strong>Fuglar</strong> <b id="hudFood">0/5</b></span>
+      </div>
+      <div class="hud-group hud-center">
+        <span id="comboBadge" class="combo-badge hidden">COMBO ×2</span>
+        <span id="powerBadge" class="power-badge hidden"></span>
+      </div>
+      <div class="hud-group hud-right">
+        <span class="hud-chip score-chip"><strong>⭐</strong> <b id="hudPoints">0</b></span>
+        <span id="hudLives" class="lives" aria-label="Líf"></span>
+        <button id="soundBtn" class="icon-btn" aria-label="Kveikja eða slökkva á hljóði">🔊</button>
+        <button id="pauseBtn" class="icon-btn" aria-label="Gera hlé">Ⅱ</button>
+      </div>
+    </section>
+
+    <section id="homeScreen" class="screen home-screen">
+      <div class="home-card">
+        <img class="logo-art" src="assets/sprites/cover.webp" alt="Snake Eating Chicken">
+        <div class="menu-panel">
+          <div class="points-line">⭐ <span id="menuPoints">0</span> stig</div>
+          <button id="playBtn" class="primary-btn jumbo">SPILA</button>
+          <div class="difficulty" role="group" aria-label="Veldu erfiðleikastig">
+            <button class="difficulty-btn selected" data-difficulty="calm"><span>🌱</span><b>Rólegt</b><small>Hægt · 5 líf · veggir öruggir</small></button>
+            <button class="difficulty-btn" data-difficulty="normal"><span>🐍</span><b>Venjulegt</b><small>Meðalhraði · 3 líf</small></button>
+            <button class="difficulty-btn" data-difficulty="hard"><span>🔥</span><b>Krefjandi</b><small>Hratt · 2 líf</small></button>
+          </div>
+          <div class="menu-actions">
+            <button id="shopBtn" class="secondary-btn">🛒 BÚÐ</button>
+            <button id="installBtn" class="secondary-btn">⬇ SETJA UPP APPIÐ</button>
+            <button id="fullscreenBtn" class="secondary-btn">⛶ FULLSCREEN</button>
+          </div>
+          <p class="controls-hint">Örvatakkar eða WASD · Strjúktu á snertiskjá · P til að gera hlé</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="shopScreen" class="screen hidden">
+      <div class="panel shop-panel">
+        <header class="panel-header">
+          <button id="shopBackBtn" class="back-btn">← Til baka</button>
+          <h1>Búðin</h1>
+          <div class="points-line">⭐ <span id="shopPoints">0</span></div>
+        </header>
+        <p class="shop-intro">Safnaðu stigum í leiknum og opnaðu nýtt útlit og varanlega hæfileika.</p>
+        <div id="shopGrid" class="shop-grid"></div>
+      </div>
+    </section>
+
+    <section id="pauseScreen" class="screen hidden">
+      <div class="panel small-panel">
+        <h1>Hlé</h1>
+        <button id="resumeBtn" class="primary-btn">HALDA ÁFRAM</button>
+        <button id="restartBtn" class="secondary-btn">BYRJA BORÐ AFTUR</button>
+        <button id="menuBtn" class="secondary-btn">FARA Í VALMYND</button>
+      </div>
+    </section>
+
+    <section id="resultScreen" class="screen hidden">
+      <div class="panel small-panel result-panel">
+        <div id="resultIcon" class="result-icon">🏆</div>
+        <h1 id="resultTitle">Frábært!</h1>
+        <p id="resultText"></p>
+        <button id="resultBtn" class="primary-btn">ÁFRAM</button>
+        <button id="resultMenuBtn" class="secondary-btn">VALMYND</button>
+      </div>
+    </section>
+
+    <div id="levelBanner" class="level-banner hidden" aria-live="assertive">
+      <b id="levelBannerTitle">Borð 2</b>
+      <span id="levelBannerText">Ný áskorun!</span>
+    </div>
+
+    <div id="toast" class="toast hidden" aria-live="polite"></div>
+
+    <nav id="touchControls" class="touch-controls hidden" aria-label="Snertistýring">
+      <button data-dir="up" class="touch-up" aria-label="Upp">▲</button>
+      <button data-dir="left" class="touch-left" aria-label="Vinstri">◀</button>
+      <button data-dir="down" class="touch-down" aria-label="Niður">▼</button>
+      <button data-dir="right" class="touch-right" aria-label="Hægri">▶</button>
+    </nav>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
