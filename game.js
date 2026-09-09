@@ -589,7 +589,7 @@ function drawCover(img, x, y, w, h) {
   ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
 }
 
-function drawSprite(img, pos, size = view.tile * 1.04, angle = 0, alpha = 1) {
+function drawSprite(img, pos, size = view.tile * 1.04, angle = 0, alpha = 1, outlined = false) {
   if (!img || !pos) return;
   const cx = view.x + (pos.x + .5) * view.tile;
   const cy = view.y + (pos.y + .5) * view.tile;
@@ -597,6 +597,15 @@ function drawSprite(img, pos, size = view.tile * 1.04, angle = 0, alpha = 1) {
   ctx.globalAlpha = alpha;
   ctx.translate(cx, cy);
   ctx.rotate(angle);
+  if (outlined) {
+    const edge = Math.max(2, view.tile * .045);
+    ctx.filter = [
+      `drop-shadow(${edge}px 0 0 #020805)`, `drop-shadow(${-edge}px 0 0 #020805)`,
+      `drop-shadow(0 ${edge}px 0 #020805)`, `drop-shadow(0 ${-edge}px 0 #020805)`,
+      `drop-shadow(${edge}px ${edge}px 0 #020805)`, `drop-shadow(${-edge}px ${edge}px 0 #020805)`,
+      `drop-shadow(${edge}px ${-edge}px 0 #020805)`, `drop-shadow(${-edge}px ${-edge}px 0 #020805)`
+    ].join(" ");
+  }
   ctx.drawImage(img, -size / 2, -size / 2, size, size);
   ctx.restore();
 }
@@ -618,34 +627,35 @@ function draw() {
   for (let y = 0; y <= view.rows; y++) { ctx.beginPath(); ctx.moveTo(view.x, view.y + y * view.tile); ctx.lineTo(view.x + view.fieldW, view.y + y * view.tile); ctx.stroke(); }
 
   for (const obstacle of obstacles) {
-    if (obstacle.type === "rock") drawSprite(images.rock, obstacle.cells[0], view.tile * 1.08);
+    if (obstacle.type === "rock") drawSprite(images.rock, obstacle.cells[0], view.tile * 1.22, 0, 1, true);
     else {
       const a = obstacle.cells[0], b = obstacle.cells[1];
       const center = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
       const cx = view.x + (center.x + .5) * view.tile, cy = view.y + (center.y + .5) * view.tile;
       ctx.save(); ctx.translate(cx, cy); if (obstacle.vertical) ctx.rotate(Math.PI / 2);
-      ctx.drawImage(images.fence, -view.tile, -view.tile / 2, view.tile * 2, view.tile); ctx.restore();
+      ctx.filter = "drop-shadow(0 0 3px #020805) drop-shadow(0 0 2px #020805)";
+      ctx.drawImage(images.fence, -view.tile * 1.1, -view.tile * .56, view.tile * 2.2, view.tile * 1.12); ctx.restore();
     }
   }
 
   if (food) {
     const img = images[food.type];
     const bob = 1 + Math.sin(performance.now() / 220) * .035;
-    drawSprite(img, food.pos, view.tile * .94 * bob);
+    drawSprite(img, food.pos, view.tile * 1.22 * bob, 0, 1, true);
   }
   if (goldenFood) {
     const pulse = 1 + Math.sin(performance.now() / 110) * .08;
     glowAt(goldenFood.pos, "#ffe43b", view.tile * .72);
-    drawSprite(images.golden, goldenFood.pos, view.tile * 1.03 * pulse, 0, Math.min(1, goldenFood.left / 600));
+    drawSprite(images.golden, goldenFood.pos, view.tile * 1.30 * pulse, 0, Math.min(1, goldenFood.left / 600), true);
   }
   if (powerup) {
     const pulse = 1 + Math.sin(performance.now() / 130) * .07;
     glowAt(powerup.pos, "#65f1ff", view.tile * .65);
-    drawSprite(images[powerup.type], powerup.pos, view.tile * .84 * pulse, 0, Math.min(1, powerup.left / 600));
+    drawSprite(images[powerup.type], powerup.pos, view.tile * 1.12 * pulse, 0, Math.min(1, powerup.left / 600), true);
   }
   if (boss) {
     glowAt(boss.pos, "#ff8a32", view.tile * 1.05);
-    drawSprite(images.boss, boss.pos, view.tile * 1.72 * (1 + Math.sin(performance.now() / 180) * .035));
+    drawSprite(images.boss, boss.pos, view.tile * 1.92 * (1 + Math.sin(performance.now() / 180) * .035), 0, 1, true);
   }
 
   drawSnake();
